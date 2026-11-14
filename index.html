@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Our Kitchen">
+<meta name="theme-color" content="#F6F1E8">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Our Kitchen</title>
+<script src="firebase-config.js"></script>
+<style>
+:root{
+  --bg:#F6F1E8; --card:#FFFFFF; --ink:#2A2824; --muted:#8B857A; --line:#E8E1D4;
+  --accent:#2F6B4F; --accent-soft:#E3EEE7; --warm:#C2643A; --warm-soft:#F7E6DC;
+  --r:14px; --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+input,select,textarea{font:inherit;font-size:16px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{min-height:130px;resize:vertical;line-height:1.45}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(var(--safe-t) + 12px) 18px 10px;display:flex;align-items:center;gap:10px}
+header h1{font-size:26px;letter-spacing:-.4px;margin:0;flex:1;font-family:ui-serif,Georgia,serif;font-weight:600}
+.iconbtn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);font-size:18px}
+main{padding:0 14px calc(96px + var(--safe-b))}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;padding:6px 4px calc(6px + var(--safe-b))}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);padding:4px 0}
+nav button .i{font-size:21px;line-height:1.1;filter:grayscale(1);opacity:.6}
+nav button.on{color:var(--accent);font-weight:600}
+nav button.on .i{filter:none;opacity:1}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:10px}
+.weeknav{display:flex;align-items:center;justify-content:space-between;margin:2px 2px 10px}
+.weeknav b{font-size:15px}
+.weeknav button{padding:6px 12px;border-radius:20px;background:var(--card);border:1px solid var(--line);font-size:14px}
+.day.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.day-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.day-h .dn{font-weight:700}
+.day-h .dd{color:var(--muted);font-size:14px;flex:1}
+.pill{font-size:13px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:20px;padding:5px 11px}
+.meal{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)}
+.meal:first-of-type{border-top:0}
+.tag{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--warm);background:var(--warm-soft);border-radius:6px;padding:2px 6px;flex:none}
+.meal .mn{flex:1;font-weight:500}
+.meal.cooked .mn{text-decoration:line-through;color:var(--muted)}
+.mini{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);font-size:14px;color:var(--muted);flex:none}
+.mini.done{background:var(--accent);border-color:var(--accent);color:#fff}
+.empty{color:var(--muted);font-size:14px;padding:2px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--accent);color:#fff;border-radius:12px;padding:12px 16px;font-weight:600;width:100%}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:var(--card);color:#B23B2E;border:1px solid #EBC9C4}
+.row{display:flex;gap:8px;align-items:center}
+.row > *{min-width:0}
+.list-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.list-item:first-child{border-top:0}
+.list-item .grow{flex:1;min-width:0}
+.sub{color:var(--muted);font-size:13px}
+.sec-title{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:18px 4px 8px;font-weight:600}
+.store-h{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.store-h b{font-size:17px;flex:1}
+.count{font-size:12px;color:var(--muted)}
+.aisle{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 2px}
+.chk{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center;flex:none;color:#fff;font-size:15px}
+.chk.on{background:var(--accent);border-color:var(--accent)}
+.shop-item.on .nm{text-decoration:line-through;color:var(--muted)}
+.qty{font-weight:600;white-space:nowrap}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 8px;margin:0 -2px}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);border-radius:20px;padding:7px 12px;font-size:14px}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip small{opacity:.75}
+.search{margin-bottom:10px}
+.banner{background:var(--warm-soft);color:#7A3D20;border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:10px}
+.hint{color:var(--muted);font-size:13px;margin:6px 2px 0}
+.sheet-bg{position:fixed;inset:0;background:rgba(30,25,20,.35);z-index:20;display:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--bg);border-radius:20px 20px 0 0;max-height:92vh;overflow-y:auto;padding:8px 16px calc(20px + var(--safe-b));transform:translateY(105%);transition:transform .25s ease}
+.sheet.open{transform:none}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 10px}
+.sheet h2{font-size:20px;margin:0 0 12px;font-family:ui-serif,Georgia,serif}
+.sheet label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:12px 0 5px}
+.seg{display:flex;background:#ECE5D8;border-radius:10px;padding:3px;gap:3px}
+.seg button{flex:1;padding:8px 0;border-radius:8px;font-size:14px}
+.seg button.on{background:#fff;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.ing{display:flex;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+.ing:first-child{border-top:0}
+.ing .q{min-width:74px;font-weight:600;color:var(--accent)}
+.steps{white-space:pre-wrap}
+.prep{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-radius:6px;padding:2px 7px;flex:none}
+.prep-easy{background:#E3EEE7;color:#2F6B4F}.prep-medium{background:#F6EBCB;color:#8A6410}.prep-hard{background:#F7E0DA;color:#A23D2B}
+.stack > * + *{margin-top:8px}
+.login{max-width:380px;margin:12vh auto 0;padding:0 20px}
+.login h1{font-family:ui-serif,Georgia,serif;font-size:32px;margin:0 0 6px}
+.err{color:#B23B2E;font-size:14px;min-height:20px;margin-top:8px}
+.toast{position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet"></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+/* ============ helpers ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fromIso = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const mondayOf = d => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); const wd = (x.getDay() + 6) % 7; return addDays(x, -wd); };
+const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MEALS = ['Breakfast','Lunch','Dinner','Snack'];
+const PREPS = [['easy','Easy prep'],['medium','Medium prep'],['hard','Hard prep']];
+const prepBadge = p => p ? `<span class="prep prep-${p}">${{easy:'Easy',medium:'Medium',hard:'Hard'}[p]}</span>` : '';
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800); }
+
+/* ============ ingredient parsing & units ============ */
+const UNITS = {tsp:'tsp',t:'tsp',teaspoon:'tsp',teaspoons:'tsp',tbsp:'tbsp',tbs:'tbsp',tablespoon:'tbsp',tablespoons:'tbsp',
+  cup:'cup',cups:'cup',c:'cup',oz:'oz',ounce:'oz',ounces:'oz',lb:'lb',lbs:'lb',pound:'lb',pounds:'lb',g:'g',gram:'g',grams:'g',
+  kg:'kg',ml:'ml',l:'l',liter:'l',liters:'l',can:'can',cans:'can',clove:'clove',cloves:'clove',pkg:'pkg',package:'pkg',packages:'pkg',
+  bunch:'bunch',bunches:'bunch',head:'head',heads:'head',jar:'jar',jars:'jar',bag:'bag',bags:'bag',box:'box',boxes:'box',
+  bottle:'bottle',bottles:'bottle',slice:'slice',slices:'slice',pinch:'pinch',dozen:'dozen',stick:'stick',sticks:'stick',
+  piece:'',pieces:'',each:'',whole:'',large:'',medium:'',small:''};
+const FRAC = {'½':.5,'⅓':1/3,'⅔':2/3,'¼':.25,'¾':.75,'⅛':.125};
+const FAM = {tsp:['v',1],tbsp:['v',3],cup:['v',48],'fl oz':['v',6],ml:['v',0.202884],l:['v',202.884],oz:['w',1],lb:['w',16],g:['w',0.035274],kg:['w',35.274]};
+const famOf = u => FAM[u] ? FAM[u][0] : 'u:' + (u || '');
+const toBase = (q, u) => FAM[u] ? q * FAM[u][1] : q;
+function fromBase(q, fam){
+  if (fam === 'w') return q >= 16 ? [q/16, 'lb'] : [q, 'oz'];
+  if (fam === 'v') return q >= 12 ? [q/48, 'cup'] : q >= 3 ? [q/3, 'tbsp'] : [q, 'tsp'];
+  return [q, fam.slice(2)];
+}
+function fmtNum(n){
+  if (n == null || isNaN(n)) return '';
+  const w = Math.floor(n + 1e-9), f = n - w;
+  const nice = [[0,''],[.125,'⅛'],[.25,'¼'],[1/3,'⅓'],[.5,'½'],[2/3,'⅔'],[.75,'¾'],[1,'']];
+  for (const [v, s] of nice) if (Math.abs(f - v) < 0.03) {
+    if (v === 1) return String(w + 1);
+    return (w ? w : (s ? '' : '0')) + s;
+  }
+  return String(Math.round(n * 100) / 100);
+}
+const PLURAL = {clove:'cloves',head:'heads',can:'cans',jar:'jars',bag:'bags',bottle:'bottles',slice:'slices',stick:'sticks',bunch:'bunches',box:'boxes',pkg:'pkgs',cup:'cups'};
+const fmtQty = (q, u) => q == null ? '' : `${fmtNum(q)}${u ? ' ' + (q > 1 && PLURAL[u] ? PLURAL[u] : u) : ''}`;
+function normName(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim(); }
+function singular(w){
+  if (w.length <= 3) return w;
+  if (/ies$/.test(w)) return w.slice(0,-3) + 'y';
+  if (/oes$/.test(w)) return w.slice(0,-2);
+  if (/(ches|shes|xes|sses)$/.test(w)) return w.slice(0,-2);
+  if (/s$/.test(w) && !/ss$/.test(w)) return w.slice(0,-1);
+  return w;
+}
+const keyOf = name => normName(name).split(' ').map((w,i,a) => i === a.length-1 ? singular(w) : w).join(' ');
+function normUnit(u){ u = String(u||'').toLowerCase().replace(/\.$/,'').trim(); if (u === 'fl oz' || u === 'floz') return 'fl oz'; return u in UNITS ? UNITS[u] : u; }
+function parseNum(tok){
+  if (/^\d+\/\d+$/.test(tok)) { const [a,b] = tok.split('/').map(Number); return b ? a/b : null; }
+  if (/^\d*\.?\d+$/.test(tok)) return parseFloat(tok);
+  return null;
+}
+function parseLine(line){
+  let t = line.trim().replace(/^[-•*]\s*/, '');
+  if (!t) return null;
+  const raw = t;
+  for (const [k, v] of Object.entries(FRAC)) t = t.split(k).join(' ' + v + ' ');
+  t = t.replace(/^(\d+(?:\.\d+)?)([a-zA-Z]+)\b/, '$1 $2');      // "2lb chicken"
+  t = t.replace(/(\d)\s*-\s*(\d)/, '$1 - $2');                   // "2-3"
+  let toks = t.split(/\s+/).filter(Boolean), qty = null, i = 0;
+  while (i < toks.length) {
+    const n = parseNum(toks[i]);
+    if (n == null) break;
+    qty = (qty || 0) + n; i++;
+    if ((toks[i] === '-' || toks[i] === 'to') && parseNum(toks[i+1] || '') != null) { qty = parseNum(toks[i+1]); i += 2; } // ranges: take the higher
+  }
+  let unit = '';
+  if (qty != null && i < toks.length) {
+    const two = (toks[i] + ' ' + (toks[i+1]||'')).toLowerCase();
+    if (two === 'fl oz' || two === 'fl. oz') { unit = 'fl oz'; i += 2; }
+    else { const u = toks[i].toLowerCase().replace(/\.$/, ''); if (u in UNITS) { unit = UNITS[u]; i++; } }
+  }
+  let rest = toks.slice(i).join(' ').replace(/^of\s+/i, '');
+  rest = rest.replace(/\([^)]*\)/g, ' ');
+  let note = '';
+  const ci = rest.indexOf(',');
+  if (ci > 0) { note = rest.slice(ci + 1).trim(); rest = rest.slice(0, ci); }
+  const name = rest.replace(/\s+/g, ' ').trim() || raw;
+  return { raw, qty, unit, name, note, key: keyOf(name) };
+}
+
+/* ============ storage: local (this device) or Firebase (shared) ============ */
+const COLS = ['recipes','items','pantry','plan','stores','checks'];
+function LocalStore(){
+  const mem = {}, cbs = {};
+  const load = c => { try { const v = localStorage.getItem('ok_' + c); if (v) return JSON.parse(v); } catch(e){} return mem[c] || {}; };
+  const save = (c, d) => { mem[c] = d; try { localStorage.setItem('ok_' + c, JSON.stringify(d)); } catch(e){} };
+  return {
+    mode: 'local', user: null,
+    async start(){},
+    subscribe(c, cb){ cbs[c] = cb; cb(load(c)); },
+    async put(c, id, obj){ const d = load(c); d[id] = JSON.parse(JSON.stringify(obj)); save(c, d); cbs[c] && cbs[c](d); },
+    async del(c, id){ const d = load(c); delete d[id]; save(c, d); cbs[c] && cbs[c](d); },
+    async signOut(){}
+  };
+}
+async function FirebaseStore(cfg, household){
+  const V = '10.12.2', base = `https://www.gstatic.com/firebasejs/${V}/`;
+  const [A, F, Au] = await Promise.all([import(base+'firebase-app.js'), import(base+'firebase-firestore.js'), import(base+'firebase-auth.js')]);
+  const app = A.initializeApp(cfg);
+  const auth = Au.getAuth(app);
+  let db; try { db = F.initializeFirestore(app, { localCache: F.persistentLocalCache() }); } catch(e) { db = F.getFirestore(app); }
+  const col = c => F.collection(db, 'households', household, c);
+  const store = {
+    mode: 'firebase', user: null,
+    start(){
+      return new Promise(resolve => {
+        Au.onAuthStateChanged(auth, u => {
+          if (u) { store.user = u.email; resolve(); }
+          else showLogin(async (email, pw) => { await Au.signInWithEmailAndPassword(auth, email, pw); });
+        });
+      });
+    },
+    subscribe(c, cb){
+      F.onSnapshot(col(c), snap => { const d = {}; snap.forEach(x => d[x.id] = x.data()); cb(d); },
+        err => { console.error(err); toast('Sync error: ' + (err.code || err.message)); });
+    },
+    put(c, id, obj){ return F.setDoc(F.doc(db, 'households', household, c, id), JSON.parse(JSON.stringify(obj))); },
+    del(c, id){ return F.deleteDoc(F.doc(db, 'households', household, c, id)); },
+    async signOut(){ await Au.signOut(auth); location.reload(); }
+  };
+  return store;
+}
+function showLogin(onSubmit){
+  $('#app').innerHTML = `<div class="login">
+    <h1>Our Kitchen</h1><p class="sub">Sign in to see your shared meal plan.</p>
+    <form id="lf" class="stack" style="margin-top:20px">
+      <input id="le" type="email" autocomplete="username" placeholder="Email" required>
+      <input id="lp" type="password" autocomplete="current-password" placeholder="Password" required>
+      <button class="btn" type="submit">Sign in</button>
+      <div class="err" id="lerr"></div>
+    </form></div>`;
+  $('#lf').onsubmit = async e => {
+    e.preventDefault(); $('#lerr').textContent = '';
+    try { await onSubmit($('#le').value.trim(), $('#lp').value); }
+    catch(err){ $('#lerr').textContent = 'Couldn’t sign in — check the email and password.'; }
+  };
+}
+
+/* ============ state ============ */
+const S = { recipes:{}, items:{}, pantry:{}, plan:{}, stores:{}, checks:{} };
+let DB, prepFilter = '', editPrep = '', tab = 'plan', weekStart = mondayOf(new Date()), shopSel = null, recipeQuery = '', ready = false, pending = false;
+try { const t = localStorage.getItem('ok_tab'); if (t) tab = t; } catch(e){}
+
+function onData(c, d){
+  S[c] = d || {};
+  if (!ready) return;
+  const a = document.activeElement;
+  if (a && $('#main') && $('#main').contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) { pending = true; return; }
+  render();
+}
+document.addEventListener('focusout', () => setTimeout(() => { if (pending) { pending = false; render(); } }, 50));
+
+async function ensureItem(name, key){
+  if (!S.items[key]) await DB.put('items', key, { name, storeId: '', aisles: {} });
+}
+const storeList = () => Object.entries(S.stores).sort((a,b) => (a[1].order ?? 99) - (b[1].order ?? 99) || a[1].name.localeCompare(b[1].name));
+const aisleOf = it => (it && it.storeId && it.aisles && it.aisles[it.storeId]) || '';
+const planFor = ds => Object.entries(S.plan).filter(([,e]) => e.date === ds).sort((a,b) => MEALS.indexOf(a[1].meal) - MEALS.indexOf(b[1].meal));
+
+/* ============ shopping math ============ */
+function computeShopping(dates){
+  const need = {}; let meals = 0;
+  for (const [, e] of Object.entries(S.plan)) {
+    if (!dates.has(e.date) || e.cooked) continue;
+    const r = S.recipes[e.recipeId]; if (!r) continue;
+    meals++;
+    const mult = e.mult || 1;
+    for (const ing of r.ingredients || []) {
+      const n = need[ing.key] ||= { key: ing.key, name: S.items[ing.key]?.name || ing.name, fams: {}, noQty: false, from: new Set() };
+      n.from.add(r.name);
+      if (ing.qty == null) n.noQty = true;
+      else { const f = famOf(ing.unit); n.fams[f] = (n.fams[f] || 0) + toBase(ing.qty * mult, ing.unit); }
+    }
+  }
+  const buy = [], covered = [];
+  for (const n of Object.values(need)) {
+    const p = S.pantry[n.key];
+    let have = '';
+    if (p) {
+      if (p.qty === '' || p.qty == null) { covered.push({ ...n, have: 'in stock' }); continue; }
+      have = fmtQty(+p.qty, p.unit);
+      const pf = famOf(p.unit);
+      if (n.fams[pf] != null) n.fams[pf] = Math.max(0, n.fams[pf] - toBase(+p.qty, p.unit));
+      else if (!Object.keys(n.fams).length) { covered.push({ ...n, have }); continue; }
+    }
+    const lines = Object.entries(n.fams).filter(([, q]) => q > 1e-6).map(([f, q]) => { const [v, u] = fromBase(q, f); return { q: v, u, fam: f, base: q }; });
+    if (!lines.length && !(n.noQty && !p && !Object.keys(n.fams).length)) { covered.push({ ...n, have }); continue; }
+    buy.push({ ...n, lines, have });
+  }
+  return { buy, covered, meals };
+}
+
+/* ============ rendering ============ */
+function render(){
+  const titles = { plan:'Meal Plan', recipes:'Recipes', shop:'Grocery List', pantry:'Pantry', stores:'Stores' };
+  $('#app').innerHTML = `
+    <header><h1>${titles[tab]}</h1><button class="iconbtn" data-act="settings" aria-label="Settings">⚙︎</button></header>
+    <main id="main">${ { plan: viewPlan, recipes: viewRecipes, shop: viewShop, pantry: viewPantry, stores: viewStores }[tab]() }</main>
+    <nav>${[['plan','📅','Plan'],['recipes','📖','Recipes'],['shop','🛒','List'],['pantry','🥫','Pantry'],['stores','🏪','Stores']]
+      .map(([k,i,l]) => `<button data-act="tab" data-tab="${k}" class="${tab===k?'on':''}"><span class="i">${i}</span>${l}</button>`).join('')}</nav>`;
+  if (tab === 'recipes') { const s = $('#rq'); if (s) s.oninput = e => { recipeQuery = e.target.value; const box = $('#rlist'); if (box) box.innerHTML = recipeListHtml(); }; }
+}
+function weekNav(){
+  const end = addDays(weekStart, 6);
+  const label = `${MON[weekStart.getMonth()]} ${weekStart.getDate()} – ${MON[end.getMonth()]} ${end.getDate()}`;
+  return `<div class="weeknav"><button data-act="week" data-d="-7">‹ Prev</button><b>${label}</b><button data-act="week" data-d="7">Next ›</button></div>`;
+}
+function viewPlan(){
+  const today = iso(new Date());
+  let h = weekNav();
+  if (!Object.keys(S.recipes).length) h += `<div class="banner">Start by adding a few recipes in the <b>Recipes</b> tab, then plan them here.</div>`;
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(weekStart, i), ds = iso(d), entries = planFor(ds);
+    h += `<div class="card day ${ds===today?'today':''}">
+      <div class="day-h"><span class="dn">${DOW[i]}</span><span class="dd">${MON[d.getMonth()]} ${d.getDate()}${ds===today?' · Today':''}</span>
+      <button class="pill" data-act="addMeal" data-date="${ds}">+ Add</button></div>
+      ${entries.length ? entries.map(([id, e]) => {
+        const r = S.recipes[e.recipeId];
+        return `<div class="meal ${e.cooked?'cooked':''}"><span class="tag">${esc(e.meal)}</span>
+          <button class="mn" style="text-align:left" data-act="viewRecipe" data-id="${e.recipeId}">${esc(r ? r.name : '(deleted recipe)')}${(e.mult||1)!==1?` <span class="sub">×${e.mult}</span>`:''}</button>
+          <button class="mini ${e.cooked?'done':''}" data-act="cook" data-id="${id}" aria-label="Mark cooked">✓</button>
+          <button class="mini" data-act="rmMeal" data-id="${id}" aria-label="Remove">✕</button></div>`;
+      }).join('') : `<div class="empty">Nothing planned</div>`}
+    </div>`;
+  }
+  h += `<p class="hint">Tap ✓ after you cook a meal — its ingredients come out of the pantry and it drops off the grocery list.</p>`;
+  return h;
+}
+function recipeListHtml(){
+  const q = normName(recipeQuery);
+  const list = Object.entries(S.recipes).filter(([, r]) => (!q || normName(r.name).includes(q)) && (!prepFilter || r.prep === prepFilter)).sort((a,b) => a[1].name.localeCompare(b[1].name));
+  if (!list.length) return `<div class="empty" style="padding:10px 4px">${Object.keys(S.recipes).length ? 'No matches.' : 'No recipes yet.'}</div>`;
+  return `<div class="card">${list.map(([id, r]) => `<button class="list-item" style="width:100%;text-align:left" data-act="viewRecipe" data-id="${id}">
+    <div class="grow"><div style="font-weight:600">${esc(r.name)}</div><div class="sub">${(r.ingredients||[]).length} ingredients${r.servings?` · serves ${esc(r.servings)}`:''}</div></div>${prepBadge(r.prep)}<span class="sub">›</span></button>`).join('')}</div>`;
+}
+function viewRecipes(){
+  return `<div class="row" style="margin-bottom:10px"><input id="rq" class="search" style="margin:0" placeholder="Search recipes" value="${esc(recipeQuery)}"><button class="btn" style="width:auto;flex:none" data-act="editRecipe">+ New</button></div>
+    <div class="chips">${[['','All'],...PREPS].map(([k,l]) => `<button class="chip ${prepFilter===k?'on':''}" data-act="prepFilter" data-p="${k}">${k ? l.replace(' prep','') : l}</button>`).join('')}</div>
+    <div id="rlist">${recipeListHtml()}</div>`;
+}
+function shopDates(){
+  const all = [...Array(7)].map((_, i) => iso(addDays(weekStart, i)));
+  if (!shopSel) shopSel = new Set(all.filter(ds => planFor(ds).some(([, e]) => !e.cooked)));
+  return all;
+}
+function viewShop(){
+  const all = shopDates();
+  let h = weekNav();
+  h += `<div class="chips">${all.map((ds, i) => { const n = planFor(ds).filter(([, e]) => !e.cooked).length;
+    return `<button class="chip ${shopSel.has(ds)?'on':''}" data-act="shopDay" data-date="${ds}">${DOW[i]} <small>${fromIso(ds).getDate()}${n?` · ${n}`:''}</small></button>`; }).join('')}</div>`;
+  const { buy, covered, meals } = computeShopping(shopSel);
+  if (!meals) return h + `<div class="card empty">Pick days above that have meals planned. Your list builds itself from those recipes, minus what's already in the pantry.</div>`;
+  h += `<p class="hint" style="margin:0 4px 10px">${buy.length} item${buy.length===1?'':'s'} to buy for ${meals} meal${meals===1?'':'s'}</p>`;
+  const groups = {};
+  for (const b of buy) { const it = S.items[b.key]; const sid = it?.storeId && S.stores[it.storeId] ? it.storeId : ''; (groups[sid] ||= []).push(b); }
+  const order = [...storeList().map(([id]) => id), ''];
+  for (const sid of order) {
+    const g = groups[sid]; if (!g) continue;
+    const sname = sid ? S.stores[sid].name : 'No store set';
+    const byAisle = {};
+    for (const b of g) (byAisle[aisleOf(S.items[b.key]) || ''] ||= []).push(b);
+    const aisles = Object.keys(byAisle).sort((a, b) => (a === '') - (b === '') || a.localeCompare(b, undefined, { numeric: true }));
+    const done = g.filter(b => S.checks[b.key]).length;
+    h += `<div class="card"><div class="store-h"><b>${esc(sname)}</b><span class="count">${done}/${g.length}</span></div>
+      ${!sid ? `<div class="hint" style="margin:0 0 4px">Tap an item to set where you buy it.</div>` : ''}
+      ${aisles.map(a => `${sid ? `<div class="aisle">${a ? esc(a) : 'Aisle not set'}</div>` : ''}
+        ${byAisle[a].sort((x, y) => x.name.localeCompare(y.name)).map(b => `<div class="list-item shop-item ${S.checks[b.key]?'on':''}">
+          <button class="chk ${S.checks[b.key]?'on':''}" data-act="check" data-key="${esc(b.key)}" aria-label="Check off">${S.checks[b.key]?'✓':''}</button>
+          <button class="grow" style="text-align:left" data-act="editItem" data-key="${esc(b.key)}">
+            <div class="nm" style="font-weight:500">${esc(b.name)}</div>
+            <div class="sub">${b.have?`have ${esc(b.have)} · `:''}${esc([...b.from].join(', '))}</div></button>
+          <span class="qty">${b.lines.length ? b.lines.map(l => esc(fmtQty(l.q, l.u))).join(' + ') : '<span class="sub">as needed</span>'}</span></div>`).join('')}`).join('')}
+    </div>`;
+  }
+  if (Object.keys(S.checks).length) h += `<button class="btn" data-act="finishShop" style="margin-top:6px">Done shopping — move checked items to pantry</button>`;
+  if (covered.length) h += `<div class="sec-title">Already have</div><div class="card">${covered.map(c => `<div class="list-item"><div class="grow">${esc(c.name)}</div><span class="sub">${esc(c.have)}</span></div>`).join('')}</div>`;
+  return h;
+}
+function viewPantry(){
+  const names = Object.values(S.items).map(i => `<option value="${esc(i.name)}">`).join('');
+  let h = `<div class="card"><div class="stack">
+    <input id="pn" list="itemnames" placeholder="Item (e.g. chicken breast)" autocomplete="off"><datalist id="itemnames">${names}</datalist>
+    <div class="row"><input id="pq" inputmode="decimal" placeholder="Amount (optional)"><input id="pu" placeholder="Unit (lb, cup…)" list="unitlist"></div>
+    <datalist id="unitlist">${['lb','oz','cup','tbsp','tsp','can','jar','bag','box','bottle','pkg','bunch','head','clove','dozen','g','kg','ml','l'].map(u=>`<option value="${u}">`).join('')}</datalist>
+    <button class="btn" data-act="addPantry">Add to pantry</button></div>
+    <p class="hint">Leave the amount blank for things you always have plenty of (salt, oil, spices).</p></div>`;
+  const list = Object.entries(S.pantry).sort((a, b) => a[1].name.localeCompare(b[1].name));
+  h += list.length ? `<div class="card">${list.map(([k, p]) => `<button class="list-item" style="width:100%;text-align:left" data-act="editPantry" data-key="${esc(k)}">
+      <div class="grow" style="font-weight:500">${esc(p.name)}</div><span class="${p.qty===''||p.qty==null?'sub':'qty'}">${p.qty===''||p.qty==null?'in stock':esc(fmtQty(+p.qty, p.unit))}</span></button>`).join('')}</div>`
+    : `<div class="empty" style="padding:4px">Your pantry is empty.</div>`;
+  return h;
+}
+function viewStores(){
+  let h = `<div class="card">${storeList().map(([id, s]) => `<div class="list-item"><div class="grow" style="font-weight:600">${esc(s.name)}</div>
+      <span class="sub">${Object.values(S.items).filter(i => i.storeId === id).length} items</span>
+      <button class="mini" data-act="editStore" data-id="${id}" aria-label="Edit">✎</button></div>`).join('')}
+    <div class="row" style="margin-top:8px"><input id="sn" placeholder="Add a store (e.g. Costco)"><button class="btn" style="width:auto;flex:none" data-act="addStore">Add</button></div></div>`;
+  h += `<div class="sec-title">Where we buy things</div><p class="hint" style="margin:-4px 4px 8px">Tap an item to set its store and aisle. Every recipe ingredient shows up here.</p>`;
+  const items = Object.entries(S.items).sort((a, b) => a[1].name.localeCompare(b[1].name));
+  if (!items.length) return h + `<div class="empty" style="padding:4px">Items appear here once you add recipes.</div>`;
+  const groups = {};
+  for (const [k, it] of items) (groups[it.storeId && S.stores[it.storeId] ? it.storeId : ''] ||= []).push([k, it]);
+  for (const sid of ['', ...storeList().map(([id]) => id)]) {
+    const g = groups[sid]; if (!g) continue;
+    h += `<div class="card"><div class="store-h"><b>${sid ? esc(S.stores[sid].name) : 'Not set yet'}</b><span class="count">${g.length}</span></div>
+      ${g.map(([k, it]) => `<button class="list-item" style="width:100%;text-align:left" data-act="editItem" data-key="${esc(k)}"><div class="grow">${esc(it.name)}</div><span class="sub">${esc(aisleOf(it))}</span></button>`).join('')}</div>`;
+  }
+  return h;
+}
+
+/* ============ sheets ============ */
+function openSheet(html){ const s = $('#sheet'); s.innerHTML = `<div class="grab"></div>` + html; $('#sheetBg').style.display = 'block'; requestAnimationFrame(() => s.classList.add('open')); }
+function closeSheet(){ $('#sheet').classList.remove('open'); $('#sheetBg').style.display = 'none'; if (pending) { pending = false; render(); } }
+$('#sheetBg').onclick = closeSheet;
+
+let addMealState = { date: '', meal: 'Dinner', mult: 1 };
+function sheetAddMeal(date){
+  addMealState = { date, meal: addMealState.meal || 'Dinner', mult: 1 };
+  const d = fromIso(date);
+  const recipes = Object.entries(S.recipes).sort((a, b) => a[1].name.localeCompare(b[1].name));
+  openSheet(`<h2>${DOW[(d.getDay()+6)%7]}, ${MON[d.getMonth()]} ${d.getDate()}</h2>
+    <div class="seg" id="mealSeg">${MEALS.map(m => `<button data-act="pickMealType" data-m="${m}" class="${m===addMealState.meal?'on':''}">${m}</button>`).join('')}</div>
+    <label>How many batches?</label><div class="seg" id="multSeg">${[0.5,1,2,3].map(m => `<button data-act="pickMult" data-m="${m}" class="${m===1?'on':''}">${m===0.5?'½':m}×</button>`).join('')}</div>
+    <label>Recipe</label>
+    ${recipes.length ? `<div class="card" style="padding:2px 14px">${recipes.map(([id, r]) => `<button class="list-item" style="width:100%;text-align:left" data-act="planRecipe" data-id="${id}"><div class="grow" style="font-weight:500">${esc(r.name)}</div>${prepBadge(r.prep)}<span class="pill">Add</span></button>`).join('')}</div>`
+      : `<div class="empty">No recipes yet.</div><button class="btn" style="margin-top:10px" data-act="newRecipeFromPlan">Add a recipe</button>`}`);
+}
+function sheetRecipe(id){
+  const r = S.recipes[id]; if (!r) return;
+  openSheet(`<h2>${esc(r.name)}</h2>${r.servings || r.prep ? `<div class="row" style="margin:-6px 0 10px">${prepBadge(r.prep)}${r.servings ? `<span class="sub">Serves ${esc(r.servings)}</span>` : ''}</div>` : ''}
+    <div class="card">${(r.ingredients||[]).map(i => `<div class="ing"><span class="q">${esc(fmtQty(i.qty, i.unit)) || '—'}</span><span>${esc(i.name)}${i.note ? ` <span class="sub">${esc(i.note)}</span>` : ''}</span></div>`).join('') || '<div class="empty">No ingredients</div>'}</div>
+    ${r.steps ? `<label>Directions</label><div class="card steps">${esc(r.steps)}</div>` : ''}
+    <div class="stack" style="margin-top:12px"><button class="btn" data-act="editRecipe" data-id="${id}">Edit recipe</button>
+    <button class="btn danger" data-act="delRecipe" data-id="${id}">Delete recipe</button></div>`);
+}
+function sheetEditRecipe(id){
+  const r = id ? S.recipes[id] : null;
+  editPrep = r?.prep || '';
+  openSheet(`<h2>${r ? 'Edit recipe' : 'New recipe'}</h2>
+    <label>Name</label><input id="rn" value="${esc(r?.name)}" placeholder="Chicken stir fry">
+    <label>Serves</label><input id="rs" inputmode="numeric" value="${esc(r?.servings)}" placeholder="4">
+    <label>Prep</label><div class="seg" id="prepSeg">${PREPS.map(([k,l]) => `<button data-act="pickPrep" data-p="${k}" class="${editPrep===k?'on':''}">${l.replace(' prep','')}</button>`).join('')}</div>
+    <label>Ingredients — one per line</label>
+    <textarea id="ri" placeholder="2 lb chicken breast, cubed&#10;1 head broccoli&#10;3 tbsp soy sauce&#10;2 cloves garlic&#10;1 cup rice&#10;salt">${esc((r?.ingredients||[]).map(i => i.raw).join('\n'))}</textarea>
+    <p class="hint">Write them like a normal recipe — amount, unit, then the item. You can paste straight from a website.</p>
+    <label>Directions (optional)</label><textarea id="rd" placeholder="Steps, notes, link to the original…">${esc(r?.steps)}</textarea>
+    <div class="stack" style="margin-top:14px"><button class="btn" data-act="saveRecipe" data-id="${id||''}">Save recipe</button><button class="btn ghost" data-act="close">Cancel</button></div>`);
+}
+function sheetItem(key){
+  const it = S.items[key] || { name: key, storeId: '', aisles: {} };
+  openSheet(`<h2>${esc(it.name)}</h2>
+    <label>Where do you usually buy it?</label>
+    <select id="is"><option value="">— Not set —</option>${storeList().map(([id, s]) => `<option value="${id}" ${it.storeId===id?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
+    <label>Aisle or section at that store</label>
+    <input id="ia" value="${esc(aisleOf(it))}" placeholder="e.g. Aisle 7, Produce, Meat counter">
+    <p class="hint">Aisles are remembered per store, so switching stores won’t lose what you entered.</p>
+    <div class="stack" style="margin-top:14px"><button class="btn" data-act="saveItem" data-key="${esc(key)}">Save</button><button class="btn ghost" data-act="close">Cancel</button></div>`);
+  $('#is').onchange = e => { $('#ia').value = (it.aisles || {})[e.target.value] || ''; };
+}
+function sheetPantry(key){
+  const p = S.pantry[key]; if (!p) return;
+  openSheet(`<h2>${esc(p.name)}</h2>
+    <div class="row"><div style="flex:1"><label>Amount</label><input id="eq" inputmode="decimal" value="${esc(p.qty ?? '')}" placeholder="blank = in stock"></div>
+    <div style="flex:1"><label>Unit</label><input id="eu" value="${esc(p.unit||'')}" list="unitlist2"></div></div>
+    <datalist id="unitlist2">${['lb','oz','cup','tbsp','tsp','can','jar','bag','box','bottle','pkg','bunch','head','clove','dozen'].map(u=>`<option value="${u}">`).join('')}</datalist>
+    <div class="stack" style="margin-top:14px"><button class="btn" data-act="savePantry" data-key="${esc(key)}">Save</button>
+    <button class="btn danger" data-act="delPantry" data-key="${esc(key)}">Remove — we’re out</button></div>`);
+}
+function sheetStore(id){
+  const s = S.stores[id];
+  openSheet(`<h2>Edit store</h2><label>Name</label><input id="esn" value="${esc(s.name)}">
+    <div class="stack" style="margin-top:14px"><button class="btn" data-act="saveStore" data-id="${id}">Save</button>
+    <button class="btn danger" data-act="delStore" data-id="${id}">Delete store</button></div>`);
+}
+function sheetSettings(){
+  const shared = DB.mode === 'firebase';
+  openSheet(`<h2>Settings</h2>
+    <div class="card">${shared ? `<b>Shared & syncing</b><div class="sub">Signed in as ${esc(DB.user)}. Changes appear on both phones instantly.</div>`
+      : `<b>This device only</b><div class="sub">Data is saved in this browser. Follow the setup guide to connect Firebase so both phones share one plan.</div>`}</div>
+    <div class="stack">
+      <button class="btn ghost" data-act="exportData">Copy backup to clipboard</button>
+      <label>Restore / import a backup</label><textarea id="imp" placeholder="Paste a backup here" style="min-height:80px"></textarea>
+      <button class="btn ghost" data-act="importData">Import backup</button>
+      ${shared ? `<button class="btn danger" data-act="signOut">Sign out</button>` : ''}
+    </div>`);
+}
+
+/* ============ actions ============ */
+async function subtractFromPantry(r, mult){
+  for (const ing of r.ingredients || []) {
+    const p = S.pantry[ing.key];
+    if (!p || p.qty === '' || p.qty == null || ing.qty == null) continue;
+    if (famOf(p.unit) !== famOf(ing.unit)) continue;
+    const left = toBase(+p.qty, p.unit) - toBase(ing.qty * mult, ing.unit);
+    if (left <= 1e-6) await DB.del('pantry', ing.key);
+    else await DB.put('pantry', ing.key, { ...p, qty: Math.round(left / (FAM[p.unit]?.[1] || 1) * 100) / 100 });
+  }
+}
+async function addToPantry(key, name, lines){
+  const p = S.pantry[key];
+  if (p && (p.qty === '' || p.qty == null)) return;
+  if (!lines.length) { if (!p) await DB.put('pantry', key, { name, qty: '', unit: '' }); return; }
+  if (p) {
+    const pf = famOf(p.unit), l = lines.find(x => x.fam === pf);
+    if (l) { const tot = toBase(+p.qty, p.unit) + l.base; await DB.put('pantry', key, { ...p, qty: Math.round(tot / (FAM[p.unit]?.[1] || 1) * 100) / 100 }); return; }
+  }
+  const l = lines[0];
+  await DB.put('pantry', key, { name, qty: Math.round(l.q * 100) / 100, unit: l.u });
+}
+
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const a = el.dataset.act, id = el.dataset.id, key = el.dataset.key;
+  switch (a) {
+    case 'tab': tab = el.dataset.tab; try { localStorage.setItem('ok_tab', tab); } catch(e){} window.scrollTo(0, 0); render(); break;
+    case 'week': weekStart = addDays(weekStart, +el.dataset.d); shopSel = null; render(); break;
+    case 'settings': sheetSettings(); break;
+    case 'close': closeSheet(); break;
+    case 'addMeal': sheetAddMeal(el.dataset.date); break;
+    case 'pickMealType': addMealState.meal = el.dataset.m; $('#mealSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); break;
+    case 'pickMult': addMealState.mult = +el.dataset.m; $('#multSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); break;
+    case 'planRecipe': await DB.put('plan', uid(), { date: addMealState.date, meal: addMealState.meal, recipeId: id, mult: addMealState.mult, cooked: false }); shopSel = null; closeSheet(); toast('Added to plan'); break;
+    case 'newRecipeFromPlan': closeSheet(); tab = 'recipes'; render(); sheetEditRecipe(); break;
+    case 'rmMeal': await DB.del('plan', id); shopSel = null; break;
+    case 'cook': {
+      const ent = S.plan[id]; if (!ent) break;
+      const r = S.recipes[ent.recipeId];
+      if (!ent.cooked && r) { await subtractFromPantry(r, ent.mult || 1); toast('Marked cooked — pantry updated'); }
+      await DB.put('plan', id, { ...ent, cooked: !ent.cooked });
+      break;
+    }
+    case 'viewRecipe': sheetRecipe(id); break;
+    case 'prepFilter': prepFilter = el.dataset.p; render(); break;
+    case 'pickPrep': editPrep = editPrep === el.dataset.p ? '' : el.dataset.p; $('#prepSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.p === editPrep)); break;
+    case 'editRecipe': sheetEditRecipe(id); break;
+    case 'saveRecipe': {
+      const name = $('#rn').value.trim();
+      if (!name) { $('#rn').focus(); toast('Give it a name'); break; }
+      const ingredients = $('#ri').value.split('\n').map(parseLine).filter(Boolean);
+      for (const ing of ingredients) await ensureItem(ing.name, ing.key);
+      const rid = id || uid();
+      await DB.put('recipes', rid, { name, prep: editPrep, servings: $('#rs').value.trim(), ingredients, steps: $('#rd').value.trim() });
+      closeSheet(); toast('Recipe saved'); if (tab === 'recipes') render();
+      break;
+    }
+    case 'delRecipe':
+      if (el.dataset.confirm !== '1') { el.dataset.confirm = '1'; el.textContent = 'Tap again to delete'; break; }
+      await DB.del('recipes', id);
+      for (const [pid, pe] of Object.entries(S.plan)) if (pe.recipeId === id) await DB.del('plan', pid);
+      closeSheet(); toast('Recipe deleted'); break;
+    case 'shopDay': shopDates(); shopSel.has(el.dataset.date) ? shopSel.delete(el.dataset.date) : shopSel.add(el.dataset.date); render(); break;
+    case 'check': if (S.checks[key]) await DB.del('checks', key); else await DB.put('checks', key, { on: true, at: Date.now() }); break;
+    case 'finishShop': {
+      const { buy } = computeShopping(shopSel || new Set());
+      let n = 0;
+      for (const b of buy) if (S.checks[b.key]) { await addToPantry(b.key, b.name, b.lines); n++; }
+      for (const k of Object.keys(S.checks)) await DB.del('checks', k);
+      toast(`${n} item${n===1?'':'s'} added to pantry`); break;
+    }
+    case 'editItem': sheetItem(key); break;
+    case 'saveItem': {
+      const it = S.items[key] || { name: key, aisles: {} };
+      const storeId = $('#is').value, aisles = { ...(it.aisles || {}) };
+      if (storeId) aisles[storeId] = $('#ia').value.trim();
+      await DB.put('items', key, { ...it, storeId, aisles });
+      closeSheet(); break;
+    }
+    case 'addPantry': {
+      const name = $('#pn').value.trim(); if (!name) { $('#pn').focus(); break; }
+      const k = keyOf(name), q = $('#pq').value.trim();
+      const qty = q === '' ? '' : (parseNum(q.replace(/\s+/g, '')) ?? parseFloat(q));
+      await ensureItem(name, k);
+      await DB.put('pantry', k, { name: S.items[k]?.name || name, qty: qty === '' || isNaN(qty) ? '' : qty, unit: normUnit($('#pu').value) });
+      $('#pn').value = ''; $('#pq').value = ''; $('#pu').value = ''; document.activeElement?.blur(); toast('Added'); break;
+    }
+    case 'editPantry': sheetPantry(key); break;
+    case 'savePantry': { const p = S.pantry[key]; const q = $('#eq').value.trim(); const qty = q === '' ? '' : parseFloat(q);
+      await DB.put('pantry', key, { ...p, qty: q === '' || isNaN(qty) ? '' : qty, unit: normUnit($('#eu').value) }); closeSheet(); break; }
+    case 'delPantry': await DB.del('pantry', key); closeSheet(); break;
+    case 'addStore': { const n = $('#sn').value.trim(); if (!n) break; await DB.put('stores', uid(), { name: n, order: storeList().length }); $('#sn').value = ''; document.activeElement?.blur(); break; }
+    case 'editStore': sheetStore(id); break;
+    case 'saveStore': { const n = $('#esn').value.trim(); if (n) await DB.put('stores', id, { ...S.stores[id], name: n }); closeSheet(); break; }
+    case 'delStore':
+      if (el.dataset.confirm !== '1') { el.dataset.confirm = '1'; el.textContent = 'Tap again to delete'; break; }
+      await DB.del('stores', id);
+      for (const [k, it] of Object.entries(S.items)) if (it.storeId === id) await DB.put('items', k, { ...it, storeId: '' });
+      closeSheet(); break;
+    case 'exportData': {
+      const txt = JSON.stringify(Object.fromEntries(COLS.map(c => [c, S[c]])));
+      try { await navigator.clipboard.writeText(txt); toast('Backup copied'); }
+      catch(err){ $('#imp').value = txt; $('#imp').select(); toast('Copy the text in the box'); }
+      break;
+    }
+    case 'importData': {
+      try {
+        const data = JSON.parse($('#imp').value);
+        let n = 0;
+        for (const c of COLS) for (const [k, v] of Object.entries(data[c] || {})) { await DB.put(c, k, v); n++; }
+        closeSheet(); toast(`Imported ${n} records`);
+      } catch(err){ toast('That backup couldn’t be read'); }
+      break;
+    }
+    case 'signOut': await DB.signOut(); break;
+  }
+});
+
+/* ============ boot ============ */
+(async function boot(){
+  const cfg = window.FIREBASE_CONFIG;
+  try { DB = cfg && cfg.apiKey ? await FirebaseStore(cfg, window.HOUSEHOLD_ID || 'home') : LocalStore(); }
+  catch(err){ console.error(err); $('#app').innerHTML = `<div class="login"><h1>Our Kitchen</h1><p class="err">Couldn’t connect to Firebase. Check firebase-config.js and your internet connection.</p></div>`; return; }
+  await DB.start();
+  $('#app').innerHTML = `<div class="login"><p class="sub">Loading…</p></div>`;
+  let loaded = 0;
+  await new Promise(resolve => {
+    for (const c of COLS) { let first = true; DB.subscribe(c, d => { onData(c, d); if (first) { first = false; if (++loaded === COLS.length) resolve(); } }); }
+  });
+  if (!Object.keys(S.stores).length) {
+    await DB.put('stores', 'publix', { name: 'Publix', order: 0 });
+    await DB.put('stores', 'sams', { name: "Sam's Club", order: 1 });
+  }
+  ready = true; render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Only these two accounts can read or write the shared kitchen.
+    // Replace the emails with the two you create in Firebase Authentication.
+    match /households/{household}/{document=**} {
+      allow read, write: if request.auth != null
+        && request.auth.token.email in ['chasecerbone@gmail.com', 'delriodorothy@gmail.com'];
+    }
+  }
+}
