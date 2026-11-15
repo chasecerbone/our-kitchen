@@ -27,6 +27,10 @@ textarea{min-height:130px;resize:vertical;line-height:1.45}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
 header{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(var(--safe-t) + 12px) 18px 10px;display:flex;align-items:center;gap:10px}
 header h1{font-size:26px;letter-spacing:-.4px;margin:0;flex:1;font-family:ui-serif,Georgia,serif;font-weight:600}
+.backbtn{display:inline-flex;align-items:center;gap:2px;font-size:17px;font-weight:600;color:var(--accent);padding:6px 10px 6px 4px;margin-left:-6px}
+.backbtn .ch{font-size:26px;line-height:1;margin-top:-2px}
+.sheet-top{display:flex;align-items:center;justify-content:space-between;margin:0 0 6px;position:sticky;top:-8px;background:var(--bg);padding:6px 0;z-index:2}
+.sheet-top .x{font-size:15px;color:var(--muted);padding:6px 4px}
 .iconbtn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);font-size:18px}
 main{padding:0 14px calc(96px + var(--safe-b))}
 nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;padding:6px 4px calc(6px + var(--safe-b))}
@@ -79,7 +83,7 @@ nav button.on .i{filter:none;opacity:1}
 .sheet-bg{position:fixed;inset:0;background:rgba(30,25,20,.35);z-index:20;display:none}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--bg);border-radius:20px 20px 0 0;max-height:92vh;overflow-y:auto;padding:8px 16px calc(20px + var(--safe-b));transform:translateY(105%);transition:transform .25s ease}
 .sheet.open{transform:none}
-.sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 10px}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 2px}
 .sheet h2{font-size:20px;margin:0 0 12px;font-family:ui-serif,Georgia,serif}
 .sheet label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:12px 0 5px}
 .seg{display:flex;background:#ECE5D8;border-radius:10px;padding:3px;gap:3px}
@@ -117,6 +121,9 @@ const mondayOf = d => { const x = new Date(d.getFullYear(), d.getMonth(), d.getD
 const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MEALS = ['Breakfast','Lunch','Dinner','Snack'];
+const COMMON_SPICES = ['Salt','Sea salt','Kosher salt','Black pepper','Garlic powder','Onion powder','Paprika','Smoked paprika','Cumin','Chili powder',
+  'Cayenne pepper','Red pepper flakes','Oregano','Basil','Thyme','Rosemary','Dried parsley','Dill','Sage','Bay leaf','Italian seasoning',
+  'Cinnamon','Nutmeg','Ground ginger','Ground cloves','Allspice','Pumpkin pie spice','Curry powder','Turmeric','Coriander','Everything bagel seasoning'];
 const PREPS = [['easy','Easy prep'],['medium','Medium prep'],['hard','Hard prep']];
 const prepBadge = p => p ? `<span class="prep prep-${p}">${{easy:'Easy',medium:'Medium',hard:'Hard'}[p]}</span>` : '';
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800); }
@@ -254,7 +261,7 @@ function showLogin(onSubmit){
 
 /* ============ state ============ */
 const S = { recipes:{}, items:{}, pantry:{}, plan:{}, stores:{}, checks:{} };
-let DB, prepFilter = '', editPrep = '', tab = 'plan', weekStart = mondayOf(new Date()), shopSel = null, recipeQuery = '', ready = false, pending = false;
+let DB, pantryView = 'food', spiceQuery = '', tabHist = [], sheetStack = [], prepFilter = '', editPrep = '', tab = 'plan', weekStart = mondayOf(new Date()), shopSel = null, recipeQuery = '', ready = false, pending = false;
 try { const t = localStorage.getItem('ok_tab'); if (t) tab = t; } catch(e){}
 
 function onData(c, d){
@@ -310,10 +317,11 @@ function computeShopping(dates){
 function render(){
   const titles = { plan:'Meal Plan', recipes:'Recipes', shop:'Grocery List', pantry:'Pantry', stores:'Stores' };
   $('#app').innerHTML = `
-    <header><h1>${titles[tab]}</h1><button class="iconbtn" data-act="settings" aria-label="Settings">⚙︎</button></header>
+    <header>${tabHist.length ? `<button class="backbtn" data-act="tabBack" aria-label="Back"><span class="ch">‹</span>Back</button>` : ''}<h1>${titles[tab]}</h1><button class="iconbtn" data-act="settings" aria-label="Settings">⚙︎</button></header>
     <main id="main">${ { plan: viewPlan, recipes: viewRecipes, shop: viewShop, pantry: viewPantry, stores: viewStores }[tab]() }</main>
     <nav>${[['plan','📅','Plan'],['recipes','📖','Recipes'],['shop','🛒','List'],['pantry','🥫','Pantry'],['stores','🏪','Stores']]
       .map(([k,i,l]) => `<button data-act="tab" data-tab="${k}" class="${tab===k?'on':''}"><span class="i">${i}</span>${l}</button>`).join('')}</nav>`;
+  if (tab === 'pantry' && pantryView === 'spices') { const sp = $('#spq'); if (sp) sp.oninput = e => { spiceQuery = e.target.value; const pos = e.target.selectionStart; render(); const n = $('#spq'); n.focus(); try { n.setSelectionRange(pos, pos); } catch(_){} }; }
   if (tab === 'recipes') { const s = $('#rq'); if (s) s.oninput = e => { recipeQuery = e.target.value; const box = $('#rlist'); if (box) box.innerHTML = recipeListHtml(); }; }
 }
 function weekNav(){
@@ -392,18 +400,53 @@ function viewShop(){
   if (covered.length) h += `<div class="sec-title">Already have</div><div class="card">${covered.map(c => `<div class="list-item"><div class="grow">${esc(c.name)}</div><span class="sub">${esc(c.have)}</span></div>`).join('')}</div>`;
   return h;
 }
+const SPICE_KEYS = new Set(COMMON_SPICES.map(keyOf));
+const isSpice = k => SPICE_KEYS.has(k) || !!S.items[k]?.spice || !!S.pantry[k]?.spice;
 function viewPantry(){
-  const names = Object.values(S.items).map(i => `<option value="${esc(i.name)}">`).join('');
+  let h = `<div class="seg" style="margin-bottom:12px">
+    <button data-act="pantryView" data-v="food" class="${pantryView==='food'?'on':''}">🥫 Food & supplies</button>
+    <button data-act="pantryView" data-v="spices" class="${pantryView==='spices'?'on':''}">🧂 Spices</button></div>`;
+  return h + (pantryView === 'spices' ? viewSpices() : viewFood());
+}
+function viewFood(){
+  const names = Object.entries(S.items).filter(([k]) => !isSpice(k)).map(([, i]) => `<option value="${esc(i.name)}">`).join('');
   let h = `<div class="card"><div class="stack">
     <input id="pn" list="itemnames" placeholder="Item (e.g. chicken breast)" autocomplete="off"><datalist id="itemnames">${names}</datalist>
     <div class="row"><input id="pq" inputmode="decimal" placeholder="Amount (optional)"><input id="pu" placeholder="Unit (lb, cup…)" list="unitlist"></div>
     <datalist id="unitlist">${['lb','oz','cup','tbsp','tsp','can','jar','bag','box','bottle','pkg','bunch','head','clove','dozen','g','kg','ml','l'].map(u=>`<option value="${u}">`).join('')}</datalist>
     <button class="btn" data-act="addPantry">Add to pantry</button></div>
-    <p class="hint">Leave the amount blank for things you always have plenty of (salt, oil, spices).</p></div>`;
-  const list = Object.entries(S.pantry).sort((a, b) => a[1].name.localeCompare(b[1].name));
+    <p class="hint">Leave the amount blank for things you always have plenty of (oil, rice). Spices go in the Spices tab.</p></div>`;
+  const list = Object.entries(S.pantry).filter(([k]) => !isSpice(k)).sort((a, b) => a[1].name.localeCompare(b[1].name));
   h += list.length ? `<div class="card">${list.map(([k, p]) => `<button class="list-item" style="width:100%;text-align:left" data-act="editPantry" data-key="${esc(k)}">
       <div class="grow" style="font-weight:500">${esc(p.name)}</div><span class="${p.qty===''||p.qty==null?'sub':'qty'}">${p.qty===''||p.qty==null?'in stock':esc(fmtQty(+p.qty, p.unit))}</span></button>`).join('')}</div>`
-    : `<div class="empty" style="padding:4px">Your pantry is empty.</div>`;
+    : `<div class="empty" style="padding:4px">No food in the pantry yet.</div>`;
+  return h;
+}
+function spiceRow(k, name, usedIn){
+  const have = !!S.pantry[k];
+  return `<div class="list-item"><button class="chk ${have?'on':''}" data-act="toggleSpice" data-key="${esc(k)}" data-name="${esc(name)}" aria-label="Have it">${have?'✓':''}</button>
+    <button class="grow" style="text-align:left" data-act="toggleSpice" data-key="${esc(k)}" data-name="${esc(name)}"><div style="font-weight:500">${esc(name)}</div>${usedIn ? `<div class="sub">${esc(usedIn)}</div>` : ''}</button>
+    <span class="${have?'pill':'sub'}" style="${have?'':'font-size:13px'}">${have ? 'Have' : 'Need'}</span></div>`;
+}
+function viewSpices(){
+  const q = normName(spiceQuery);
+  const usedBy = {};
+  for (const r of Object.values(S.recipes)) for (const i of r.ingredients || []) if (isSpice(i.key)) (usedBy[i.key] ||= new Set()).add(r.name);
+  const names = {};
+  for (const n of COMMON_SPICES) names[keyOf(n)] = n;
+  for (const [k, it] of Object.entries(S.items)) if (isSpice(k)) names[k] = it.name;
+  for (const [k, p] of Object.entries(S.pantry)) if (isSpice(k)) names[k] = p.name;
+  const match = k => !q || normName(names[k]).includes(q);
+  const cap = n => n.charAt(0).toUpperCase() + n.slice(1);
+  const recipeKeys = Object.keys(usedBy).filter(match).sort((a, b) => names[a].localeCompare(names[b]));
+  const otherKeys = Object.keys(names).filter(k => !usedBy[k] && match(k)).sort((a, b) => (!!S.pantry[b] - !!S.pantry[a]) || names[a].localeCompare(names[b]));
+  const haveCount = Object.keys(names).filter(k => S.pantry[k]).length;
+  let h = `<div class="row" style="margin-bottom:10px"><input id="spq" placeholder="Search or add a spice" value="${esc(spiceQuery)}" autocomplete="off"></div>
+    <p class="hint" style="margin:-2px 4px 10px">Tap a spice to mark that you have it. ${haveCount} on hand.</p>`;
+  if (q && !names[keyOf(spiceQuery)]) h += `<div class="card"><div class="row"><input id="spn" value="${esc(cap(spiceQuery.trim()))}"><button class="btn" style="width:auto;flex:none" data-act="addSpice">Add</button></div></div>`;
+  if (recipeKeys.length) h += `<div class="sec-title">Used in your recipes</div><div class="card">${recipeKeys.map(k => spiceRow(k, cap(names[k]), [...usedBy[k]].join(', '))).join('')}</div>`;
+  if (otherKeys.length) h += `<div class="sec-title">${recipeKeys.length ? 'Other spices' : 'Spices'}</div><div class="card">${otherKeys.map(k => spiceRow(k, cap(names[k]), '')).join('')}</div>`;
+  if (!recipeKeys.length && !otherKeys.length && !q) h += `<div class="empty">No spices yet.</div>`;
   return h;
 }
 function viewStores(){
@@ -425,8 +468,10 @@ function viewStores(){
 }
 
 /* ============ sheets ============ */
-function openSheet(html){ const s = $('#sheet'); s.innerHTML = `<div class="grab"></div>` + html; $('#sheetBg').style.display = 'block'; requestAnimationFrame(() => s.classList.add('open')); }
-function closeSheet(){ $('#sheet').classList.remove('open'); $('#sheetBg').style.display = 'none'; if (pending) { pending = false; render(); } }
+function pushSheet(fn){ sheetStack.push(fn); fn(); }
+function sheetBack(){ sheetStack.pop(); if (sheetStack.length) sheetStack[sheetStack.length - 1](); else closeSheet(); }
+function openSheet(html){ const s = $('#sheet'); s.innerHTML = `<div class="grab"></div><div class="sheet-top"><button class="backbtn" data-act="sheetBack"><span class="ch">‹</span>Back</button>${sheetStack.length > 1 ? `<button class="x" data-act="close">Close</button>` : ''}</div>` + html; $('#sheetBg').style.display = 'block'; requestAnimationFrame(() => s.classList.add('open')); }
+function closeSheet(){ sheetStack = []; $('#sheet').classList.remove('open'); $('#sheetBg').style.display = 'none'; if (pending) { pending = false; render(); } }
 $('#sheetBg').onclick = closeSheet;
 
 let addMealState = { date: '', meal: 'Dinner', mult: 1 };
@@ -528,15 +573,17 @@ document.addEventListener('click', async e => {
   const el = e.target.closest('[data-act]'); if (!el) return;
   const a = el.dataset.act, id = el.dataset.id, key = el.dataset.key;
   switch (a) {
-    case 'tab': tab = el.dataset.tab; try { localStorage.setItem('ok_tab', tab); } catch(e){} window.scrollTo(0, 0); render(); break;
+    case 'tab': if (el.dataset.tab === tab) break; tabHist.push(tab); if (tabHist.length > 20) tabHist.shift(); tab = el.dataset.tab; try { localStorage.setItem('ok_tab', tab); } catch(e){} window.scrollTo(0, 0); render(); break;
     case 'week': weekStart = addDays(weekStart, +el.dataset.d); shopSel = null; render(); break;
-    case 'settings': sheetSettings(); break;
+    case 'settings': pushSheet(() => sheetSettings()); break;
+    case 'sheetBack': sheetBack(); break;
+    case 'tabBack': tab = tabHist.pop() || 'plan'; try { localStorage.setItem('ok_tab', tab); } catch(e){} window.scrollTo(0, 0); render(); break;
     case 'close': closeSheet(); break;
-    case 'addMeal': sheetAddMeal(el.dataset.date); break;
+    case 'addMeal': { const d = el.dataset.date; pushSheet(() => sheetAddMeal(d)); break; }
     case 'pickMealType': addMealState.meal = el.dataset.m; $('#mealSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); break;
     case 'pickMult': addMealState.mult = +el.dataset.m; $('#multSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); break;
     case 'planRecipe': await DB.put('plan', uid(), { date: addMealState.date, meal: addMealState.meal, recipeId: id, mult: addMealState.mult, cooked: false }); shopSel = null; closeSheet(); toast('Added to plan'); break;
-    case 'newRecipeFromPlan': closeSheet(); tab = 'recipes'; render(); sheetEditRecipe(); break;
+    case 'newRecipeFromPlan': closeSheet(); tabHist.push(tab); tab = 'recipes'; render(); pushSheet(() => sheetEditRecipe()); break;
     case 'rmMeal': await DB.del('plan', id); shopSel = null; break;
     case 'cook': {
       const ent = S.plan[id]; if (!ent) break;
@@ -545,10 +592,10 @@ document.addEventListener('click', async e => {
       await DB.put('plan', id, { ...ent, cooked: !ent.cooked });
       break;
     }
-    case 'viewRecipe': sheetRecipe(id); break;
+    case 'viewRecipe': pushSheet(() => sheetRecipe(id)); break;
     case 'prepFilter': prepFilter = el.dataset.p; render(); break;
     case 'pickPrep': editPrep = editPrep === el.dataset.p ? '' : el.dataset.p; $('#prepSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.p === editPrep)); break;
-    case 'editRecipe': sheetEditRecipe(id); break;
+    case 'editRecipe': pushSheet(() => sheetEditRecipe(id)); break;
     case 'saveRecipe': {
       const name = $('#rn').value.trim();
       if (!name) { $('#rn').focus(); toast('Give it a name'); break; }
@@ -556,7 +603,7 @@ document.addEventListener('click', async e => {
       for (const ing of ingredients) await ensureItem(ing.name, ing.key);
       const rid = id || uid();
       await DB.put('recipes', rid, { name, prep: editPrep, servings: $('#rs').value.trim(), ingredients, steps: $('#rd').value.trim() });
-      closeSheet(); toast('Recipe saved'); if (tab === 'recipes') render();
+      toast('Recipe saved'); if (id && sheetStack.length > 1) sheetBack(); else closeSheet(); if (tab === 'recipes') render();
       break;
     }
     case 'delRecipe':
@@ -573,7 +620,7 @@ document.addEventListener('click', async e => {
       for (const k of Object.keys(S.checks)) await DB.del('checks', k);
       toast(`${n} item${n===1?'':'s'} added to pantry`); break;
     }
-    case 'editItem': sheetItem(key); break;
+    case 'editItem': pushSheet(() => sheetItem(key)); break;
     case 'saveItem': {
       const it = S.items[key] || { name: key, aisles: {} };
       const storeId = $('#is').value, aisles = { ...(it.aisles || {}) };
@@ -587,14 +634,28 @@ document.addEventListener('click', async e => {
       const qty = q === '' ? '' : (parseNum(q.replace(/\s+/g, '')) ?? parseFloat(q));
       await ensureItem(name, k);
       await DB.put('pantry', k, { name: S.items[k]?.name || name, qty: qty === '' || isNaN(qty) ? '' : qty, unit: normUnit($('#pu').value) });
-      $('#pn').value = ''; $('#pq').value = ''; $('#pu').value = ''; document.activeElement?.blur(); toast('Added'); break;
+      ['#pn','#pq','#pu'].forEach(x => { const e = $(x); if (e) e.value = ''; }); document.activeElement?.blur(); toast('Added'); break;
     }
-    case 'editPantry': sheetPantry(key); break;
+    case 'editPantry': pushSheet(() => sheetPantry(key)); break;
+    case 'pantryView': pantryView = el.dataset.v; render(); break;
+    case 'toggleSpice': {
+      if (S.pantry[key]) await DB.del('pantry', key);
+      else { await ensureItem(el.dataset.name, key); await DB.put('pantry', key, { name: S.items[key]?.name || el.dataset.name, qty: '', unit: '', spice: true }); }
+      break;
+    }
+    case 'addSpice': {
+      const name = $('#spn').value.trim(); if (!name) { $('#spn').focus(); break; }
+      const k = keyOf(name);
+      await ensureItem(name, k);
+      await DB.put('items', k, { ...S.items[k], spice: true });
+      await DB.put('pantry', k, { name: S.items[k]?.name || name, qty: '', unit: '', spice: true });
+      spiceQuery = ''; document.activeElement?.blur(); render(); toast('Spice added'); break;
+    }
     case 'savePantry': { const p = S.pantry[key]; const q = $('#eq').value.trim(); const qty = q === '' ? '' : parseFloat(q);
       await DB.put('pantry', key, { ...p, qty: q === '' || isNaN(qty) ? '' : qty, unit: normUnit($('#eu').value) }); closeSheet(); break; }
     case 'delPantry': await DB.del('pantry', key); closeSheet(); break;
-    case 'addStore': { const n = $('#sn').value.trim(); if (!n) break; await DB.put('stores', uid(), { name: n, order: storeList().length }); $('#sn').value = ''; document.activeElement?.blur(); break; }
-    case 'editStore': sheetStore(id); break;
+    case 'addStore': { const n = $('#sn').value.trim(); if (!n) break; await DB.put('stores', uid(), { name: n, order: storeList().length }); if ($('#sn')) $('#sn').value = ''; document.activeElement?.blur(); break; }
+    case 'editStore': pushSheet(() => sheetStore(id)); break;
     case 'saveStore': { const n = $('#esn').value.trim(); if (n) await DB.put('stores', id, { ...S.stores[id], name: n }); closeSheet(); break; }
     case 'delStore':
       if (el.dataset.confirm !== '1') { el.dataset.confirm = '1'; el.textContent = 'Tap again to delete'; break; }
